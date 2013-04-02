@@ -8,6 +8,7 @@ Then you'll need two potentiometers to control the two platforms.
 Connect them as you would do with any potentiometer to pin A0 and A1. If 
 you don't know how to do that, you can visit this site: 
 http://www.arduino.cc/en/Tutorial/Potentiometer
+Or just look at the HARDWARE file ;)
 
 Connect the RCA cable to your TV, select the appropriate AV input and 
 enjoy!!

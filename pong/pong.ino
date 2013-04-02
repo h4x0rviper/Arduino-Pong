@@ -4,12 +4,12 @@ Arduino Pong based on TVout library
 
 #include <TVout.h>
 #include <fontALL.h>
-#define BOUNCEW 2
-#define BOUNCEH 10
+#define PADDLE_W 2
+#define PADDLE_H 10
 #define CENTERX 60
 #define CENTERY 48
-#define OFFSETX 10
-#define OFFSETY 30
+#define OFFSETX 10    //Needed for the big PONG in intro()
+#define OFFSETY 30    //^^
 #define BALLSPEED 20 //The time between ball redrawings
 
 
@@ -126,12 +126,12 @@ void addPoint(int player) {
 
 void posChange(int posy, int player) {
   if(player==1){
-    TV.draw_rect(0,0,BOUNCEW+1,96,BLACK,BLACK); //Redraw all the line
-    TV.draw_rect(0,posy,BOUNCEW,BOUNCEH,WHITE,WHITE); 
+    TV.draw_rect(0,0,PADDLE_W+1,96,BLACK,BLACK); //Redraw all the line
+    TV.draw_rect(0,posy,PADDLE_W,PADDLE_H,WHITE,WHITE); 
   }
   if(player==2) {
-    TV.draw_rect(118-BOUNCEW,0,BOUNCEW+1,96,BLACK,BLACK);
-    TV.draw_rect(118-BOUNCEW,posy,BOUNCEW,BOUNCEH,WHITE,WHITE);
+    TV.draw_rect(118-PADDLE_W,0,PADDLE_W+1,96,BLACK,BLACK);
+    TV.draw_rect(118-PADDLE_W,posy,PADDLE_W,PADDLE_H,WHITE,WHITE);
   }
   delayMicroseconds(1500); //Wait for the screen to redraw
 }
@@ -159,8 +159,8 @@ void loop() {
     boolean plathit=false;
     TV.delay(BALLSPEED);
     //Where are the players? Here we are!
-    playerposone=map(analogRead(0),0,1023,8,(96-BOUNCEH));
-    playerpostwo=map(analogRead(1),0,1023,8,(96-BOUNCEH));
+    playerposone=map(analogRead(0),0,1023,8,(96-PADDLE_H));
+    playerpostwo=map(analogRead(1),0,1023,8,(96-PADDLE_H));
     //Draw the two platforms
     posChange(playerposone, 1);
     posChange(playerpostwo, 2);
@@ -176,14 +176,14 @@ void loop() {
     
      //Bounce ball when it hits a player platform
    if(curx<=3 || curx>=116) {    //This way the ball doesn't identify itself as a platform
-     for(i=0;i<BOUNCEH;i++) {
+     for(i=0;i<PADDLE_H;i++) {
          if(cury==playerposone+i && curx<10){          //
            plathit=true;                               //
-           shifty=((cury-playerposone)-(BOUNCEH/2))/2; //This whole section makes the ball bounce quite realistically
+           shifty=((cury-playerposone)-(PADDLE_H/2))/2; //This whole section makes the ball bounce quite realistically
          }                                             //
          if(cury==playerpostwo+i && curx>100) {        //
            plathit=true;                               //
-           shifty=((cury-playerpostwo)-(BOUNCEH/2))/2; //
+           shifty=((cury-playerpostwo)-(PADDLE_H/2))/2; //
        }    
      }
      if(plathit) {                                //If the platform is on the way
