@@ -4,7 +4,7 @@ Arduino Pong based on TVout library
 
 #include <TVout.h>
 #include <fontALL.h>
-#define PADDLE_W 2
+#define PADDLE_W 1
 #define PADDLE_H 10
 #define CENTERX 60
 #define CENTERY 48
@@ -175,7 +175,7 @@ void loop() {
       shifty*=-1;
     
      //Bounce ball when it hits a player platform
-   if(curx<=3 || curx>=116) {    //This way the ball doesn't identify itself as a platform
+   if(curx<=2 || curx>=116) {    //This way the ball doesn't identify itself as a platform
      for(i=0;i<PADDLE_H;i++) {
          if(cury==playerposone+i && curx<10){          //
            plathit=true;                               //
@@ -189,7 +189,7 @@ void loop() {
      if(plathit) {                                //If the platform is on the way
         if(shiftx==1 && curx>=116) //Bounce! --> error-checking so that it won't bounce on the other player's platfoem
           shiftx=-1;
-        else if(shiftx==-1 && curx<3)
+        else if(shiftx==-1 && curx<=2)
           shiftx=1;  
      }
    }
