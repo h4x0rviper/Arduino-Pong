@@ -177,24 +177,13 @@ void loop() {
      //Bounce ball when it hits a player platform
    if(curx<=3 || curx>=116) {    //This way the ball doesn't identify itself as a platform
      for(i=0;i<BOUNCEH;i++) {
-         /* ---OLD DATA---
-       if((cury==playerposone+i && curx<10) || (cury==playerpostwo+i && curx>100)){ 
-         plathit=true;
-       
-         if(i==0 || i == BOUNCEH-1) {    //If you hit the ball on the corner
-           shifty=0;                     //Do a straight bounce
-         } else {      //Otherwise go normal
-           if(shifty==0)
-             shifty=-1;           
-         }
-         ---END OLD DATA---**/
          if(cury==playerposone+i && curx<10){          //
            plathit=true;                               //
            shifty=((cury-playerposone)-(BOUNCEH/2))/2; //This whole section makes the ball bounce quite realistically
          }                                             //
          if(cury==playerpostwo+i && curx>100) {        //
-           plathit=true;
-           shifty=((cury-playerpostwo)-(BOUNCEH/2))/2;
+           plathit=true;                               //
+           shifty=((cury-playerpostwo)-(BOUNCEH/2))/2; //
        }    
      }
      if(plathit) {                                //If the platform is on the way
