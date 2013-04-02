@@ -1,0 +1,16 @@
+
+_________________
+		|          _
+	A     +5V---------| |
+	R	|         | |	Player 1 pot
+	D      A0---------> |   Any pot would be fine
+	U	|         | |
+	I     GND---------|_|
+	N	|          _
+	O     +5V---------| |
+		|         | |   Player 2 pot
+	       A1---------> |   Also here the resistance
+		|         | |   value is not critical
+	      GND---------|_|
+		|
+________________|
