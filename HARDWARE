@@ -8,9 +8,13 @@ _________________
 	I     GND---------|_|
 	N	|          _
 	O     +5V---------| |
-		|         | |   Player 2 pot
+		|         | |   Player 2 pot (optional, see README.md)
 	       A1---------> |   Also here the resistance
 		|         | |   value is not critical
 	      GND---------|_|
 		|
+	      +5V----.
+		|    | <----Use a 20K pullup resistor
+	      D12----'
 ________________|
+
