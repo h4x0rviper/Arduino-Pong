@@ -1,17 +1,20 @@
 /*
-Arduino Pong based on TVout library
-**/
+Arduino Pong based on TVout library. Now with AI support !!!
+*/
 
 #include <TVout.h>
 #include <fontALL.h>
-#define BOUNCEW 2
-#define BOUNCEH 10
+#define PADDLE_W 1
+#define PADDLE_H 10
 #define CENTERX 60
 #define CENTERY 48
-#define OFFSETX 10
-#define OFFSETY 30
-#define BALLSPEED 20 //The time between ball redrawings
-
+#define OFFSETX 10                                            //Needed for the big PONG in intro()
+#define OFFSETY 30                                            //^^
+#define BALLSPEED 20                                          //The time between ball redrawings
+#define MAX_DUMBNESS 5
+#define POINTS_LINE 8
+#define ACTUAL_DUMBNESS 0
+#define MULTIPLAYER_PIN 12
 
 TVout TV;
 
@@ -26,7 +29,29 @@ int cury=CENTERY;
 int playerposone=48;
 int playerpostwo=48;
 
+int currentstep=0;
+int ai_shift=1;
 
+void ai(int dumbness) {
+  if(dumbness==MAX_DUMBNESS){
+                                                              //Move up and down one step a time
+   if(playerpostwo==POINTS_LINE || playerpostwo==96-PADDLE_W) //If end of line is reached
+    ai_shift*=-1;
+   playerpostwo+=ai_shift;                                    //Move platform
+  }else{
+    if(currentstep==dumbness) {                               //Dumbness control
+      if(playerpostwo>=cury)
+        ai_shift=-1;
+      else if(playerpostwo<=cury)
+        ai_shift=1;
+      playerpostwo+=ai_shift;                                 //Track ball
+      currentstep=0;
+    }else{
+      currentstep++;                                          //Wait...
+    }
+  }
+}
+      
 void intro() {
   //P
   TV.draw_rect(0+OFFSETX,10+OFFSETY,5,20,WHITE,WHITE);
@@ -62,7 +87,7 @@ void gameover() {
     TV.println("Player 2 wins!");
 }
 
-void startdir() {  //Random start direction
+void startdir() {                                             //Random start direction
   int decision=random()%3;
   switch (decision) {
     case 0:
@@ -86,12 +111,12 @@ void startdir() {  //Random start direction
 
 void drawField() {
   int i=3;
-  //Draw the center line
+                                                              //Draw the center line
   for(i;i<=96;i+=6) {
     TV.draw_line(60,(i-3),60,i,WHITE);
   }
-  TV.draw_line(0,8,120,8,WHITE);
-  //Draw the ball
+  TV.draw_line(0,POINTS_LINE,120,POINTS_LINE,WHITE);
+                                                              //Draw the ball
   TV.set_pixel(curx, cury, WHITE);
 
 }
@@ -101,19 +126,19 @@ void addPoint(int player) {
     playerpointsone++;
   else if(player==2)
     playerpointstwo++;
-   //If somebody reached the win threshold, congratulate!
+                                                              //If somebody reached the win threshold, congratulate!
    if(playerpointsone==10 || playerpointstwo==10) {
      gameover();
      TV.delay(10000);
      playerpointsone=0;
      playerpointstwo=0;
    }
-  //Redo the whole field
+                                                              //Redo the whole field
   TV.clear_screen();
   curx=CENTERX;
   cury=CENTERY;
   drawField();
-  //Rewrite updated points
+                                                              //Rewrite updated points
   TV.select_font(font6x8);
   TV.println(30,0,playerpointsone,DEC);
   TV.println(90,0,playerpointstwo,DEC);
@@ -122,18 +147,18 @@ void addPoint(int player) {
 
 }
 
-//When the player position changes
 
-void posChange(int posy, int player) {
+
+void posChange(int posy, int player) {                        //When the player position changes
   if(player==1){
-    TV.draw_rect(0,0,BOUNCEW+1,96,BLACK,BLACK); //Redraw all the line
-    TV.draw_rect(0,posy,BOUNCEW,BOUNCEH,WHITE,WHITE); 
+    TV.draw_rect(0,0,PADDLE_W+1,96,BLACK,BLACK);              //Redraw all the line
+    TV.draw_rect(0,posy,PADDLE_W,PADDLE_H,WHITE,WHITE); 
   }
   if(player==2) {
-    TV.draw_rect(118-BOUNCEW,0,BOUNCEW+1,96,BLACK,BLACK);
-    TV.draw_rect(118-BOUNCEW,posy,BOUNCEW,BOUNCEH,WHITE,WHITE);
+    TV.draw_rect(118-PADDLE_W,0,PADDLE_W+1,96,BLACK,BLACK);
+    TV.draw_rect(118-PADDLE_W,posy,PADDLE_W,PADDLE_H,WHITE,WHITE);
   }
-  delayMicroseconds(1500); //Wait for the screen to redraw
+  delayMicroseconds(1500);                                    //Wait for the screen to redraw
 }
 
 void moveBall(int nextx, int nexty) {
@@ -142,6 +167,7 @@ void moveBall(int nextx, int nexty) {
 }
 
 void setup() {
+  pinMode(MULTIPLAYER_PIN, INPUT);
   TV.begin(PAL,120,96);
   TV.select_font(font6x8);
   TV.print(40,0,"Arduino");
@@ -158,47 +184,48 @@ void loop() {
     int i=0;
     boolean plathit=false;
     TV.delay(BALLSPEED);
-    //Where are the players? Here we are!
-    playerposone=map(analogRead(0),0,1023,8,(96-BOUNCEH));
-    playerpostwo=map(analogRead(1),0,1023,8,(96-BOUNCEH));
-    //Draw the two platforms
+                                                              //Where are the players? Here we are!
+    playerposone=map(analogRead(0),0,1023,8,(96-PADDLE_H));
+    if(digitalRead(MULTIPLAYER_PIN)==1) {                     //Multiplayer selected
+      playerpostwo=map(analogRead(1),0,1023,8,(96-PADDLE_H));
+    }else{
+      ai(ACTUAL_DUMBNESS);
+    }
+                                                              //Draw the two platforms
     posChange(playerposone, 1);
     posChange(playerpostwo, 2);
-    
-
-    //Draw the ball
+                                                              //Draw the ball
     moveBall(curx+shiftx, cury+shifty);
     curx+=shiftx;
     cury+=shifty;
-   //Bouncing ball
-    if(cury<=9 || cury>=96) //Points Offset=8
+                                                              //Bouncing ball
+    if(cury<=POINTS_LINE+1 || cury>=96)                       //Points Offset=8
       shifty*=-1;
-    
-     //Bounce ball when it hits a player platform
-   if(curx<=3 || curx>=116) {    //This way the ball doesn't identify itself as a platform
-     for(i=0;i<BOUNCEH;i++) {
-         if(cury==playerposone+i && curx<10){          //
-           plathit=true;                               //
-           shifty=((cury-playerposone)-(BOUNCEH/2))/2; //This whole section makes the ball bounce quite realistically
-         }                                             //
-         if(cury==playerpostwo+i && curx>100) {        //
-           plathit=true;                               //
-           shifty=((cury-playerpostwo)-(BOUNCEH/2))/2; //
+                                                              //Bounce ball when it hits a player platform
+   if(curx<=2 || curx>=116) {                                 //This way the ball doesn't identify itself as a platform
+     for(i=0;i<PADDLE_H;i++) {
+         if(cury==playerposone+i && curx<10){                 //
+           plathit=true;                                      //
+           shifty=((cury-playerposone)-(PADDLE_H/2))/2;       //This whole section makes the ball bounce quite realistically
+         }                                                    //
+         if(cury==playerpostwo+i && curx>100) {               //
+           plathit=true;                                      //
+           shifty=((cury-playerpostwo)-(PADDLE_H/2))/2;       //
        }    
      }
-     if(plathit) {                                //If the platform is on the way
-        if(shiftx==1 && curx>=116) //Bounce! --> error-checking so that it won't bounce on the other player's platfoem
+     if(plathit) {                                            //If the platform is on the way
+        if(shiftx==1 && curx>=116)                            //Bounce! --> error-checking so that it won't bounce on the other player's platfoem
           shiftx=-1;
-        else if(shiftx==-1 && curx<3)
+        else if(shiftx==-1 && curx<=2)
           shiftx=1;  
      }
    }
-   //Point count
-   if(curx==0){     //If the ball is at 0
-     addPoint(2);  //Player2 scored a point
+                                                              //Point count
+   if(curx==0){                                               //If the ball is at 0
+     addPoint(2);                                             //Player2 scored a point
    }
-   else if(curx==120){   //If the ball is at 120
-     addPoint(1);       //Player1 scored a point
+   else if(curx==120){                                        //If the ball is at 120
+     addPoint(1);                                             //Player1 scored a point
    }
 }
 
