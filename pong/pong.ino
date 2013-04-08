@@ -42,7 +42,7 @@ void ai(int dumbness) {
     if(currentstep==dumbness) {                               //Dumbness control
       if(playerpostwo>=cury)
         ai_shift=-1;
-      else if(playerpostwo<=cury)
+      else if(playerpostwo<=cury && playerpostwo<=96-PADDLE_W)
         ai_shift=1;
       playerpostwo+=ai_shift;                                 //Track ball
       currentstep=0;
