@@ -12,9 +12,5 @@ _________________
 	       A1---------> |   Also here the resistance
 		|         | |   value is not critical
 	      GND---------|_|
-		|
-	      +5V----.
-		|    | <----Use a 20K pullup resistor
-	      D12----'
 ________________|
 

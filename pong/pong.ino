@@ -9,12 +9,14 @@ Arduino Pong based on TVout library. Now with AI support !!!
 #define CENTERX 60
 #define CENTERY 48
 #define OFFSETX 10                                            //Needed for the big PONG in intro()
-#define OFFSETY 30                                            //^^
+#define OFFSETY 20                                            //^^
 #define BALLSPEED 20                                          //The time between ball redrawings
 #define MAX_DUMBNESS 5
 #define POINTS_LINE 8
-#define ACTUAL_DUMBNESS 0
-#define MULTIPLAYER_PIN 12
+#define SINGLE_PLAYER_OFFSET 0
+#define MULTIPLAYER_OFFSET 60
+#define MENUY 90
+
 
 TVout TV;
 
@@ -31,15 +33,51 @@ int playerpostwo=48;
 
 int currentstep=0;
 int ai_shift=1;
+int actualfoolness=0;
 
-void ai(int dumbness) {
-  if(dumbness==MAX_DUMBNESS){
+int selection;    //1 means multiplayer, 0 means single player
+/* 
+Start menu (select between single player and multiplayer mode)
+*/
+void startMenu() {
+  unsigned int startMillis=millis();
+  TV.print(SINGLE_PLAYER_OFFSET+5,MENUY,"Single player");
+  TV.print(MULTIPLAYER_OFFSET+5,MENUY,"Multiplayer");
+  
+  while((millis()-startMillis)<=3000) {           //Some time to select the playing mode
+  selection = map(analogRead(0), 0, 1023, 0, 1);  //Player 1 pot will select the playing mode
+  
+  if(selection){
+    TV.draw_rect(SINGLE_PLAYER_OFFSET,MENUY,3,1,BLACK);
+    TV.draw_rect(MULTIPLAYER_OFFSET,MENUY,3,1,WHITE);
+  }else{
+    TV.draw_rect(SINGLE_PLAYER_OFFSET,MENUY,3,1,WHITE);
+    TV.draw_rect(MULTIPLAYER_OFFSET,MENUY,3,1,BLACK);
+  }
+  delay(10);  //No overloads, please!
+  }
+}
+
+
+/* 
+A function to select the AI foolness level
+*/
+void fool_select() {
+  //Coming Soon!
+  
+}
+
+/*
+The core of the AI in single-player mode
+*/
+void ai() {
+  if(actualfoolness==MAX_DUMBNESS){
                                                               //Move up and down one step a time
    if(playerpostwo==POINTS_LINE || playerpostwo==96-PADDLE_W) //If end of line is reached
     ai_shift*=-1;
    playerpostwo+=ai_shift;                                    //Move platform
   }else{
-    if(currentstep==dumbness) {                               //Dumbness control
+    if(currentstep==actualfoolness) {                               //Dumbness control
       if(playerpostwo>=cury)
         ai_shift=-1;
       else if(playerpostwo<=cury && playerpostwo<=96-PADDLE_W)
@@ -51,7 +89,10 @@ void ai(int dumbness) {
     }
   }
 }
-      
+
+/*
+The intro big title
+*/    
 void intro() {
   //P
   TV.draw_rect(0+OFFSETX,10+OFFSETY,5,20,WHITE,WHITE);
@@ -77,6 +118,9 @@ void intro() {
   TV.draw_rect(90+OFFSETX,15+OFFSETY,10,5,WHITE,WHITE);
 }
 
+/*
+The game over routine
+*/
 void gameover() {
   TV.clear_screen();
   TV.select_font(font8x8);
@@ -87,8 +131,12 @@ void gameover() {
     TV.println("Player 2 wins!");
 }
 
-void startdir() {                                             //Random start direction
-  int decision=random()%3;
+/*
+Random starting direction
+*/
+
+void startdir() {
+  int decision=random()%4;
   switch (decision) {
     case 0:
       shiftx=-1;
@@ -109,6 +157,10 @@ void startdir() {                                             //Random start dir
   
 }
 
+/*
+Draw the field (e.g. the center line, the points line, the ball at its initial position...)
+*/
+
 void drawField() {
   int i=3;
                                                               //Draw the center line
@@ -120,6 +172,10 @@ void drawField() {
   TV.set_pixel(curx, cury, WHITE);
 
 }
+
+/*
+Add points to a player
+*/
 
 void addPoint(int player) {
   if(player==1)
@@ -139,7 +195,7 @@ void addPoint(int player) {
   cury=CENTERY;
   drawField();
                                                               //Rewrite updated points
-  TV.select_font(font6x8);
+  TV.select_font(font4x6);
   TV.println(30,0,playerpointsone,DEC);
   TV.println(90,0,playerpointstwo,DEC);
   startdir();
@@ -147,9 +203,11 @@ void addPoint(int player) {
 
 }
 
+/*
+Paddle position updating routine
+*/
 
-
-void posChange(int posy, int player) {                        //When the player position changes
+void posChange(int posy, int player) {
   if(player==1){
     TV.draw_rect(0,0,PADDLE_W+1,96,BLACK,BLACK);              //Redraw all the line
     TV.draw_rect(0,posy,PADDLE_W,PADDLE_H,WHITE,WHITE); 
@@ -161,18 +219,20 @@ void posChange(int posy, int player) {                        //When the player 
   delayMicroseconds(1500);                                    //Wait for the screen to redraw
 }
 
+/*
+Ball position updating routine
+*/
 void moveBall(int nextx, int nexty) {
   TV.set_pixel(curx, cury, INVERT);
   TV.set_pixel(nextx, nexty, INVERT);
 }
 
 void setup() {
-  pinMode(MULTIPLAYER_PIN, INPUT);
   TV.begin(PAL,120,96);
-  TV.select_font(font6x8);
+  TV.select_font(font4x6);
   TV.print(40,0,"Arduino");
   intro();
-  TV.delay(2000);
+  startMenu();
   TV.clear_screen();
   TV.print(30,0,playerpointsone,WHITE);
   TV.print(90,0,playerpointstwo,WHITE);
@@ -186,10 +246,11 @@ void loop() {
     TV.delay(BALLSPEED);
                                                               //Where are the players? Here we are!
     playerposone=map(analogRead(0),0,1023,8,(96-PADDLE_H));
-    if(digitalRead(MULTIPLAYER_PIN)==1) {                     //Multiplayer selected
+    if(selection) {                     //Multiplayer selected
       playerpostwo=map(analogRead(1),0,1023,8,(96-PADDLE_H));
     }else{
-      ai(ACTUAL_DUMBNESS);
+      ai();
+      fool_select();
     }
                                                               //Draw the two platforms
     posChange(playerposone, 1);

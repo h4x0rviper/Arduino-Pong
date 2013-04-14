@@ -13,5 +13,4 @@ Or just look at the HARDWARE file ;)
 Connect the RCA cable to your TV, select the appropriate AV input and 
 enjoy!!
 
-To select multiplayer mode, use a pullup resistor from pin 12 to +5v to 
-set its logical level to HIGH.
+To select multiplayer mode, use the player 1 potentiometer
