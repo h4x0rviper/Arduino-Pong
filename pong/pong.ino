@@ -11,7 +11,7 @@ Arduino Pong based on TVout library. Now with AI support !!!
 #define OFFSETX 10                                            //Needed for the big PONG in intro()
 #define OFFSETY 20                                            //^^
 #define BALLSPEED 20                                          //The time between ball redrawings
-#define MAX_DUMBNESS 5
+#define MAX_FOOLNESS 5
 #define POINTS_LINE 8
 #define SINGLE_PLAYER_OFFSET 0
 #define MULTIPLAYER_OFFSET 60
@@ -34,8 +34,9 @@ int playerpostwo=48;
 int currentstep=0;
 int ai_shift=1;
 int actualfoolness=0;
+int selected_speed=1;
 
-int selection;    //1 means multiplayer, 0 means single player
+int selection;    //1 means single player, 0 means multiplayer
 /* 
 Start menu (select between single player and multiplayer mode)
 */
@@ -48,11 +49,12 @@ void startMenu() {
   selection = map(analogRead(0), 0, 1023, 0, 1);  //Player 1 pot will select the playing mode
   
   if(selection){
-    TV.draw_rect(SINGLE_PLAYER_OFFSET,MENUY,3,1,BLACK);
-    TV.draw_rect(MULTIPLAYER_OFFSET,MENUY,3,1,WHITE);
-  }else{
     TV.draw_rect(SINGLE_PLAYER_OFFSET,MENUY,3,1,WHITE);
     TV.draw_rect(MULTIPLAYER_OFFSET,MENUY,3,1,BLACK);
+  }else{
+    TV.draw_rect(SINGLE_PLAYER_OFFSET,MENUY,3,1,BLACK);
+    TV.draw_rect(MULTIPLAYER_OFFSET,MENUY,3,1,WHITE);
+    
   }
   delay(10);  //No overloads, please!
   }
@@ -63,25 +65,53 @@ void startMenu() {
 A function to select the AI foolness level
 */
 void fool_select() {
-  //Coming Soon!
-  
+  unsigned int startMillis=millis();
+  TV.clear_screen();
+  TV.println(" Select the CPU skill level:\n");
+  TV.print(5,10,"Easy Peasy");;
+  TV.print(5,20,"Quite Simple");
+  TV.print(5,30,"Challenging");
+  TV.print(5,50,"God Mode (A.K.a Impossible)");       
+  while((millis()-startMillis)<=3000) {           //Some time to select the playing skill lvl
+  selection = map(analogRead(0), 0, 1023, 1, 4);  //Player 1 pot will select the playing difficulty
+  TV.draw_rect(0,0,3,96,BLACK,BLACK);
+  switch (selection) {
+    case 1:
+    TV.draw_rect(0,10,3,1,WHITE,WHITE);
+    actualfoolness=2;
+    break;
+    case 2:
+    TV.draw_rect(0,20,3,1,WHITE,WHITE);
+    actualfoolness=1;
+    break;
+    case 3:
+    TV.draw_rect(0,30,3,1,WHITE,WHITE);
+    actualfoolness=0;
+    break;
+    case 4:
+    TV.draw_rect(0,50,3,1,WHITE,WHITE);
+    break;
+  }
+  TV.delay(10);
+  }
+  if(selection==4)  selected_speed=2;    //God mode setup
 }
 
 /*
 The core of the AI in single-player mode
 */
 void ai() {
-  if(actualfoolness==MAX_DUMBNESS){
+  if(actualfoolness==MAX_FOOLNESS){
                                                               //Move up and down one step a time
    if(playerpostwo==POINTS_LINE || playerpostwo==96-PADDLE_W) //If end of line is reached
     ai_shift*=-1;
    playerpostwo+=ai_shift;                                    //Move platform
   }else{
-    if(currentstep==actualfoolness) {                               //Dumbness control
+    if(currentstep==actualfoolness) {                               //Foolness control
       if(playerpostwo>=cury)
-        ai_shift=-1;
+        ai_shift=-1*(selected_speed);
       else if(playerpostwo<=cury && playerpostwo<=96-PADDLE_W)
-        ai_shift=1;
+        ai_shift=selected_speed;
       playerpostwo+=ai_shift;                                 //Track ball
       currentstep=0;
     }else{
@@ -233,6 +263,8 @@ void setup() {
   TV.print(40,0,"Arduino");
   intro();
   startMenu();
+  if(selection)
+        fool_select();
   TV.clear_screen();
   TV.print(30,0,playerpointsone,WHITE);
   TV.print(90,0,playerpointstwo,WHITE);
@@ -246,11 +278,10 @@ void loop() {
     TV.delay(BALLSPEED);
                                                               //Where are the players? Here we are!
     playerposone=map(analogRead(0),0,1023,8,(96-PADDLE_H));
-    if(selection) {                     //Multiplayer selected
-      playerpostwo=map(analogRead(1),0,1023,8,(96-PADDLE_H));
-    }else{
+    if(selection) {                     //Single player selected
       ai();
-      fool_select();
+    }else{
+      playerpostwo=map(analogRead(1),0,1023,8,(96-PADDLE_H));
     }
                                                               //Draw the two platforms
     posChange(playerposone, 1);
