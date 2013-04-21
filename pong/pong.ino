@@ -31,7 +31,7 @@ int cury=CENTERY;
 int playerposone=48;
 int playerpostwo=48;
 
-int currentstep=0;
+
 int ai_shift=1;
 int actualfoolness=0;
 int selected_speed=1;
@@ -46,9 +46,9 @@ void startMenu() {
   TV.print(MULTIPLAYER_OFFSET+5,MENUY,"Multiplayer");
   
   while((millis()-startMillis)<=3000) {           //Some time to select the playing mode
-  selection = map(analogRead(0), 0, 1023, 0, 1);  //Player 1 pot will select the playing mode
+  selection = map(analogRead(0), 0, 1023, 0, 4);  //Player 1 pot will select the playing mode
   
-  if(selection){
+  if(selection<3){
     TV.draw_rect(SINGLE_PLAYER_OFFSET,MENUY,3,1,WHITE);
     TV.draw_rect(MULTIPLAYER_OFFSET,MENUY,3,1,BLACK);
   }else{
@@ -68,10 +68,10 @@ void fool_select() {
   unsigned int startMillis=millis();
   TV.clear_screen();
   TV.println(" Select the CPU skill level:\n");
-  TV.print(5,10,"Easy Peasy");;
-  TV.print(5,20,"Quite Simple");
-  TV.print(5,30,"Challenging");
-  TV.print(5,50,"God Mode (A.K.a Impossible)");       
+  TV.print(5,10,"Easy");;
+  TV.print(5,20,"Medium");
+  TV.print(5,30,"Hard");
+  TV.print(5,50,"Extreme");       
   while((millis()-startMillis)<=3000) {           //Some time to select the playing skill lvl
   selection = map(analogRead(0), 0, 1023, 1, 4);  //Player 1 pot will select the playing difficulty
   TV.draw_rect(0,0,3,96,BLACK,BLACK);
@@ -94,7 +94,7 @@ void fool_select() {
   }
   TV.delay(10);
   }
-  if(selection==4)  selected_speed=2;    //God mode setup
+  if(selection==4) selected_speed=2;
 }
 
 /*
@@ -105,17 +105,16 @@ void ai() {
                                                               //Move up and down one step a time
    if(playerpostwo==POINTS_LINE || playerpostwo==96-PADDLE_W) //If end of line is reached
     ai_shift*=-1;
+    
    playerpostwo+=ai_shift;                                    //Move platform
+   
   }else{
-    if(currentstep==actualfoolness) {                               //Foolness control
+    if(curx>=(actualfoolness+1)*25) {              //Foolness control (start tracking later and later)
       if(playerpostwo>=cury)
         ai_shift=-1*(selected_speed);
       else if(playerpostwo<=cury && playerpostwo<=96-PADDLE_W)
         ai_shift=selected_speed;
       playerpostwo+=ai_shift;                                 //Track ball
-      currentstep=0;
-    }else{
-      currentstep++;                                          //Wait...
     }
   }
 }
